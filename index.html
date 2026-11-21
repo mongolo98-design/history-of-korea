@@ -93,7 +93,14 @@ main{max-width:1240px;margin:0 auto;padding:16px max(4vw,14px) 40px}
 .zbar{background:#0a0e18;display:flex;gap:8px;align-items:center;padding:10px 12px;color:#fff;font-family:'Jua'}
 .zbar button{border:0;border-radius:10px;min-width:48px;min-height:44px;font:20px 'Jua';background:rgba(255,255,255,.16);color:#fff}
 .zbar .x{margin-left:auto;background:var(--red)}
-.zsc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+.zsc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior:contain}
+.zh{font:13px 'Gowun Dodum';color:#aab4c8}
+button,.chip,.opt,.tab,.inner,.stage{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.stage{touch-action:pan-y pinch-zoom}
+#flash{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(29,36,51,.88);color:#fff;font:16px 'Jua';padding:10px 18px;border-radius:999px;opacity:0;pointer-events:none;z-index:60}
+#flash.on{animation:fl 1.1s ease-out}
+@keyframes fl{0%{opacity:0;transform:translate(-50%,10px)}15%,70%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+.btn:active,.chip:active,.pn:active,.opt:active,.mode:active{transform:scale(.96)}
 .zsc img{display:block;max-width:none;background:#fff}
 @media(max-width:700px){.binder{padding:8px}.rings{display:none}.bar{font-size:15px}.big{font-size:17px}}
 </style>
@@ -177,7 +184,7 @@ main{max-width:1240px;margin:0 auto;padding:16px max(4vw,14px) 40px}
     <button class="tab" role="tab" data-v="quiz"><i style="background:#f0c24b"></i>퀴즈</button>
   </nav>
 </header>
-<main>
+<main><div id="flash" aria-live="polite"></div>
   <section class="view" id="v-book">
     <div class="chips" id="chips"></div>
     <div class="binder">
@@ -194,7 +201,7 @@ main{max-width:1240px;margin:0 auto;padding:16px max(4vw,14px) 40px}
       <div class="thumbs" id="thumbs"></div>
     </div>
   </section>
-  <div class="zoom" id="zoom" hidden><div class="zbar"><button id="zout" aria-label="작게">−</button><button id="zin" aria-label="크게">+</button><span id="zlab"></span><button class="x" id="zx">닫기</button></div><div class="zsc" id="zsc"><img id="zimg" alt=""></div></div>
+  <div class="zoom" id="zoom" hidden><div class="zbar"><button id="zout" aria-label="작게">−</button><button id="zin" aria-label="크게">+</button><span id="zlab"></span><span class="zh">두 손가락으로 벌리기 · 두 번 톡 = 확대</span><button class="x" id="zx">닫기</button></div><div class="zsc" id="zsc"><img id="zimg" alt=""></div></div>
   <section class="view" id="v-quiz" hidden>
     <div class="chips" id="qsrc"><button class="chip" data-s="w">숙제워크지 퀴즈</button><button class="chip" data-s="n">복습노트 퀴즈</button></div>
     <div class="chips" id="qchips"></div>
@@ -231,7 +238,7 @@ function showBook(){
   $('stage').classList.toggle('read',rd); img.hidden=rd; $('nvbox').hidden=!rd;
   if(rd){$('nvbox').innerHTML='<div class="nv">'+NVP[p-1]+'</div>';}
   $('mode').hidden=book!=='notes'; $('mode').textContent=readMode?'원본 쪽으로 보기':'글자 크게 보기';
-  $('tip').textContent=rd?'':'쪽 그림을 누르면 크게 확대해서 볼 수 있어요. 핸드폰을 가로로 돌려도 좋아요.';
+  $('tip').textContent=rd?'옆으로 밀면 다음 쪽으로 넘어가요':'쪽 그림을 톡 누르면 확대돼요 · 옆으로 밀면 쪽이 넘어가요';
   $('pv2').disabled=p<=1; $('nx2').disabled=p>=B.n;
   img.style.opacity=.3; img.src=B.f(p); img.alt=(book==='workbook'?'숙제워크지 ':'복습노트 ')+p+'쪽';
   $('prev').disabled=p<=1; $('next').disabled=p>=B.n;
@@ -246,12 +253,12 @@ function showBook(){
 img.onload=()=>img.style.opacity=1;
 let readMode=store.get('readMode',true), zf=2.2;
 $('mode').onclick=()=>{readMode=!readMode;store.set('readMode',readMode);showBook()};
-$('pv2').onclick=()=>{go(page[book]-1);const y=$('stage').getBoundingClientRect().top+scrollY-70;if(scrollY>y)scrollTo(0,y)};
-$('nx2').onclick=()=>{go(page[book]+1);const y=$('stage').getBoundingClientRect().top+scrollY-70;if(scrollY>y)scrollTo(0,y)};
+$('pv2').onclick=()=>turn(-1);
+$('nx2').onclick=()=>turn(1);
 function zset(){const w=Math.round(window.innerWidth*zf);$('zimg').style.width=w+'px';$('zlab').textContent=Math.round(zf*100)+'%'}
 img.onclick=()=>{$('zimg').src=img.src;zf=BOOKS[book].land?2.6:1.8;zset();$('zoom').hidden=false;document.body.style.overflow='hidden'};
-$('zin').onclick=()=>{zf=Math.min(5,zf+0.4);zset()};
-$('zout').onclick=()=>{zf=Math.max(1,zf-0.4);zset()};
+$('zin').onclick=()=>zoomTo(Math.min(6,zf+0.5),$('zsc').clientWidth/2,$('zsc').clientHeight/2);
+$('zout').onclick=()=>zoomTo(Math.max(1,zf-0.5),$('zsc').clientWidth/2,$('zsc').clientHeight/2);
 $('zx').onclick=()=>{$('zoom').hidden=true;document.body.style.overflow=''};
 function buildThumbs(){
   const B=BOOKS[book];
@@ -264,9 +271,23 @@ $('chips').onclick=e=>{const b=e.target.closest('.chip');if(b)go(+b.dataset.p)};
 $('thumbs').onclick=e=>{const b=e.target.closest('button');if(b)go(+b.dataset.p)};
 $('jump').onchange=e=>go(+e.target.value||1);
 document.addEventListener('keydown',e=>{if($('v-book').hidden||e.target.tagName==='INPUT')return;if(e.key==='ArrowLeft')go(page[book]-1);if(e.key==='ArrowRight')go(page[book]+1)});
-let sx=null;
-$('stage').addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
-$('stage').addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)go(page[book]+(dx<0?1:-1));sx=null});
+/* swipe helper: horizontal swipe only when clearly sideways */
+function swipe(el,onL,onR){let x0=null,y0=0,t0=0,multi=false;
+  el.addEventListener('touchstart',e=>{multi=e.touches.length>1;if(multi){x0=null;return}x0=e.touches[0].clientX;y0=e.touches[0].clientY;t0=Date.now()},{passive:true});
+  el.addEventListener('touchend',e=>{if(x0==null||multi){x0=null;return}const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;
+    if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.6&&Date.now()-t0<800){(dx<0?onL:onR)()}},{passive:true});}
+function flash(t){const f=$('flash');f.textContent=t;f.classList.remove('on');void f.offsetWidth;f.classList.add('on')}
+function turn(d){const B=BOOKS[book],n=page[book]+d;if(n<1||n>B.n){flash(n<1?'첫 쪽이에요':'마지막 쪽이에요');return}go(n);flash(n+' / '+B.n+'쪽');const y=$('stage').getBoundingClientRect().top+scrollY-70;if(scrollY>y)scrollTo(0,y)}
+swipe($('stage'),()=>turn(1),()=>turn(-1));
+/* zoom: pinch + double tap */
+{const Z=$('zsc');let d0=0,z0=0,cx=0,cy=0,lastTap=0;
+ const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+ Z.addEventListener('touchstart',e=>{if(e.touches.length===2){d0=dist(e.touches);z0=zf;const r=Z.getBoundingClientRect();cx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;cy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top}
+   else if(e.touches.length===1){const now=Date.now();if(now-lastTap<300){e.preventDefault();const r=Z.getBoundingClientRect();zoomTo(zf<2.5?3.2:1.2,e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);lastTap=0}else lastTap=now}},{passive:false});
+ Z.addEventListener('touchmove',e=>{if(e.touches.length===2&&d0){e.preventDefault();zoomTo(Math.max(1,Math.min(6,z0*dist(e.touches)/d0)),cx,cy)}},{passive:false});
+ Z.addEventListener('touchend',e=>{if(e.touches.length<2)d0=0});
+ window.zoomTo=(nz,px,py)=>{const ox=(Z.scrollLeft+px)/zf,oy=(Z.scrollTop+py)/zf;zf=nz;zset();Z.scrollLeft=ox*zf-px;Z.scrollTop=oy*zf-py};
+}
 
 /* quiz */
 const WQ=[{"d": "선사시대", "t": "숙제워크지 선사시대", "q": "뗀석기(주먹도끼)를 사용하고 이동 생활을 한 시대는?", "a": "구석기 시대", "p": 2}, {"d": "선사시대", "t": "숙제워크지 선사시대", "q": "빗살무늬 토기를 만들고 농사를 시작한 시대는?", "a": "신석기 시대", "p": 2}, {"d": "선사시대", "t": "숙제워크지 선사시대", "q": "고인돌과 비파형 동검이 나타난 시대는?", "a": "청동기 시대", "p": 2}, {"d": "선사시대", "t": "숙제워크지 선사시대", "q": "단군왕검이 세운 최초의 국가는?", "a": "고조선 (기원전 2333)", "p": 2}, {"d": "여러 나라", "t": "숙제워크지 여러 나라", "q": "부여의 제천 행사와 열린 달은?", "a": "영고, 12월", "p": 3}, {"d": "여러 나라", "t": "숙제워크지 여러 나라", "q": "고구려의 혼인 풍습(데릴사위제)은?", "a": "서옥제", "p": 3}, {"d": "여러 나라", "t": "숙제워크지 여러 나라", "q": "옥저의 결혼 풍습은?", "a": "민며느리제", "p": 3}, {"d": "여러 나라", "t": "숙제워크지 여러 나라", "q": "동예에서 다른 부족 땅을 넘으면 소·말로 갚게 한 풍습은?", "a": "책화", "p": 3}, {"d": "여러 나라", "t": "숙제워크지 여러 나라", "q": "삼한에서 천군이 제사를 지내던 신성한 곳은?", "a": "소도", "p": 3}, {"d": "고구려 성장 그래프", "t": "숙제워크지 고구려 성장 그래프", "q": "진대법을 실시한 고구려 왕은?", "a": "고국천왕", "p": 4}, {"d": "고구려 성장 그래프", "t": "숙제워크지 고구려 성장 그래프", "q": "불교 수용·태학 설립·율령 반포를 한 왕은?", "a": "소수림왕", "p": 4}, {"d": "고구려 성장 그래프", "t": "숙제워크지 고구려 성장 그래프", "q": "평양으로 천도하고 남진 정책을 편 왕은?", "a": "장수왕", "p": 4}, {"d": "고구려 성장 그래프", "t": "숙제워크지 고구려 성장 그래프", "q": "요동과 만주를 정복한 고구려 최대 영토의 왕은?", "a": "광개토 대왕", "p": 4}, {"d": "백제 성장 그래프", "t": "숙제워크지 백제 성장 그래프", "q": "4세기 백제의 전성기를 이끈 왕은?", "a": "근초고왕", "p": 5}, {"d": "백제 성장 그래프", "t": "숙제워크지 백제 성장 그래프", "q": "사비(부여)로 천도하고 관산성 전투에서 전사한 왕은?", "a": "성왕", "p": 5}, {"d": "백제 성장 그래프", "t": "숙제워크지 백제 성장 그래프", "q": "22담로에 왕족을 보낸 왕은?", "a": "무령왕", "p": 5}, {"d": "백제 성장 그래프", "t": "숙제워크지 백제 성장 그래프", "q": "475년 장수왕에게 한성을 빼앗기고 전사한 왕은?", "a": "개로왕", "p": 5}, {"d": "신라 성장 그래프", "t": "숙제워크지 신라 성장 그래프", "q": "국호를 ‘신라’로 정하고 우산국을 정벌한 왕은?", "a": "지증왕", "p": 6}, {"d": "신라 성장 그래프", "t": "숙제워크지 신라 성장 그래프", "q": "율령 반포·불교 공인(이차돈)·금관가야 병합을 한 왕은?", "a": "법흥왕", "p": 6}, {"d": "신라 성장 그래프", "t": "숙제워크지 신라 성장 그래프", "q": "한강 유역을 차지하고 화랑도를 정비한 왕은?", "a": "진흥왕", "p": 6}, {"d": "신라 성장 그래프", "t": "숙제워크지 신라 성장 그래프", "q": "백제와 나제 동맹을 맺은 왕은?", "a": "눌지왕 (433)", "p": 6}, {"d": "삼국의 통일 과정", "t": "숙제워크지 삼국의 통일 과정", "q": "계백의 결사대가 김유신에게 진 전투는?", "a": "황산벌 전투 (660)", "p": 7}, {"d": "삼국의 통일 과정", "t": "숙제워크지 삼국의 통일 과정", "q": "고구려가 멸망한 해는?", "a": "668년", "p": 7}, {"d": "삼국의 통일 과정", "t": "숙제워크지 삼국의 통일 과정", "q": "나당 전쟁에서 이긴 두 전투는?", "a": "매소성(675) · 기벌포(676)", "p": 7}, {"d": "삼국의 통일 과정", "t": "숙제워크지 삼국의 통일 과정", "q": "통일 신라의 북쪽 경계는?", "a": "대동강 ~ 원산만", "p": 7}, {"d": "통일신라 · 발해", "t": "숙제워크지 통일신라 · 발해", "q": "9주 5소경을 설치하고 녹읍을 폐지한 왕은?", "a": "신문왕", "p": 8}, {"d": "통일신라 · 발해", "t": "숙제워크지 통일신라 · 발해", "q": "청해진에서 해상 무역을 한 사람은?", "a": "장보고", "p": 8}, {"d": "통일신라 · 발해", "t": "숙제워크지 통일신라 · 발해", "q": "발해를 세운 사람은?", "a": "대조영 (698)", "p": 8}, {"d": "통일신라 · 발해", "t": "숙제워크지 통일신라 · 발해", "q": "발해 선왕 때 불린 이름은?", "a": "해동성국", "p": 8}, {"d": "후삼국 통일", "t": "숙제워크지 후삼국 통일", "q": "왕건이 견훤에게 크게 진 전투는?", "a": "공산 전투 (927)", "p": 9}, {"d": "후삼국 통일", "t": "숙제워크지 후삼국 통일", "q": "고려가 우세해진 전투는?", "a": "고창 전투 (930)", "p": 9}, {"d": "후삼국 통일", "t": "숙제워크지 후삼국 통일", "q": "나라를 고려에 스스로 넘겨준 신라 왕은?", "a": "경순왕 (935)", "p": 9}, {"d": "후삼국 통일", "t": "숙제워크지 후삼국 통일", "q": "후삼국을 통일한 해는?", "a": "936년", "p": 9}, {"d": "고려 전기", "t": "숙제워크지 고려 전기", "q": "왕건이 후손에게 남긴 가르침은?", "a": "훈요 10조", "p": 10}, {"d": "고려 전기", "t": "숙제워크지 고려 전기", "q": "노비안검법과 과거제를 실시한 왕은?", "a": "광종", "p": 10}, {"d": "고려 전기", "t": "숙제워크지 고려 전기", "q": "최승로의 시무 28조를 받아들인 왕은?", "a": "성종", "p": 10}, {"d": "고려 전기", "t": "숙제워크지 고려 전기", "q": "서경 천도를 주장하며 난을 일으킨 승려는?", "a": "묘청 (1135)", "p": 10}, {"d": "고려의 외세 침입", "t": "숙제워크지 고려의 외세 침입", "q": "외교 담판으로 강동 6주를 얻은 사람은?", "a": "서희", "p": 11}, {"d": "고려의 외세 침입", "t": "숙제워크지 고려의 외세 침입", "q": "귀주 대첩에서 거란을 물리친 장수는?", "a": "강감찬 (1018)", "p": 11}, {"d": "고려의 외세 침입", "t": "숙제워크지 고려의 외세 침입", "q": "별무반을 만들어 여진을 정벌한 사람은?", "a": "윤관", "p": 11}, {"d": "고려의 외세 침입", "t": "숙제워크지 고려의 외세 침입", "q": "처인성에서 몽골 장수 살리타를 죽인 사람은?", "a": "김윤후", "p": 11}, {"d": "고려 후기", "t": "숙제워크지 고려 후기", "q": "1170년 무신들이 일으킨 사건은?", "a": "무신 정변", "p": 12}, {"d": "고려 후기", "t": "숙제워크지 고려 후기", "q": "고려 왕 이름에 ‘충’ 자가 붙은 시기는?", "a": "원 간섭기", "p": 12}, {"d": "고려 후기", "t": "숙제워크지 고려 후기", "q": "쌍성총관부를 되찾고 전민변정도감을 둔 왕은?", "a": "공민왕", "p": 12}, {"d": "고려 후기", "t": "숙제워크지 고려 후기", "q": "이성계가 군대를 돌려 권력을 잡은 사건은?", "a": "위화도 회군 (1388)", "p": 12}, {"d": "조선 전기", "t": "숙제워크지 조선 전기", "q": "훈민정음을 만든 왕은?", "a": "세종", "p": 13}, {"d": "조선 전기", "t": "숙제워크지 조선 전기", "q": "6조 직계제와 호패법을 실시한 왕은?", "a": "태종", "p": 13}, {"d": "조선 전기", "t": "숙제워크지 조선 전기", "q": "경국대전을 완성한 왕은?", "a": "성종", "p": 13}, {"d": "조선 전기", "t": "숙제워크지 조선 전기", "q": "조광조의 개혁이 실패한 사화는?", "a": "기묘사화 (1519)", "p": 13}, {"d": "조선 후기", "t": "숙제워크지 조선 후기", "q": "세도 정치가 시작된 왕은?", "a": "순조", "p": 14}, {"d": "조선 후기", "t": "숙제워크지 조선 후기", "q": "삼정의 세 가지는?", "a": "전정 · 군정 · 환곡", "p": 14}, {"d": "조선 후기", "t": "숙제워크지 조선 후기", "q": "탕평책과 균역법을 실시한 왕은?", "a": "영조", "p": 14}, {"d": "조선 후기", "t": "숙제워크지 조선 후기", "q": "규장각과 수원 화성의 왕은?", "a": "정조", "p": 14}, {"d": "개항기", "t": "숙제워크지 개항기", "q": "1876년 일본과 맺은 최초의 근대 조약은?", "a": "강화도 조약", "p": 15}, {"d": "개항기", "t": "숙제워크지 개항기", "q": "김옥균이 일으킨 3일 천하는?", "a": "갑신정변 (1884)", "p": 15}, {"d": "개항기", "t": "숙제워크지 개항기", "q": "외교권을 빼앗긴 1905년의 조약은?", "a": "을사늑약", "p": 15}, {"d": "개항기", "t": "숙제워크지 개항기", "q": "1910년 나라를 빼앗긴 일은?", "a": "국권 피탈 (경술국치)", "p": 15}, {"d": "일제강점기", "t": "숙제워크지 일제강점기", "q": "1910년대 일제의 통치 방식은?", "a": "무단 통치", "p": 16}, {"d": "일제강점기", "t": "숙제워크지 일제강점기", "q": "1919년 전국에서 일어난 만세 운동은?", "a": "3·1 운동", "p": 16}, {"d": "일제강점기", "t": "숙제워크지 일제강점기", "q": "봉오동 전투를 이끈 독립군 장군은?", "a": "홍범도", "p": 16}, {"d": "일제강점기", "t": "숙제워크지 일제강점기", "q": "일본식 이름을 강요한 정책은?", "a": "창씨개명", "p": 16}, {"d": "근현대", "t": "숙제워크지 근현대", "q": "대한민국 정부가 수립된 해는?", "a": "1948년", "p": 17}, {"d": "근현대", "t": "숙제워크지 근현대", "q": "3·15 부정 선거에 맞선 혁명은?", "a": "4·19 혁명 (1960)", "p": 17}, {"d": "근현대", "t": "숙제워크지 근현대", "q": "대통령 직선제를 이끌어 낸 1987년의 항쟁은?", "a": "6월 민주 항쟁", "p": 17}, {"d": "근현대", "t": "숙제워크지 근현대", "q": "첫 남북 정상 회담이 열린 해는?", "a": "2000년 (6·15 남북 공동 선언)", "p": 17}];
@@ -295,7 +316,7 @@ function renderQuiz(){
   if(!P.length){$('qwrap').innerHTML=`<div class="empty">${$('flt').value==='all'?'문제가 없어요.':'여기에 해당하는 문제가 없어요! 잘했어요.'}</div>`;return}
   const q=P[qi];
   $('qwrap').innerHTML=`<div class="card" id="card"><div class="inner">
-    <div class="face front"><div class="tag">${lab(q.d)} · ${q.t} · ${qi+1}/${P.length}</div><div class="cardq">${q.q}</div><div class="hint">눌러서 정답 보기</div></div>
+    <div class="face front"><div class="tag">${lab(q.d)} · ${q.t} · ${qi+1}/${P.length}</div><div class="cardq">${q.q}</div><div class="hint">톡 누르면 정답 · 옆으로 밀면 다음 문제</div></div>
     <div class="face back"><div class="tag">정답</div><div class="ans">${q.a}</div></div></div></div>
     <div class="acts"><button class="btn idk" data-m="idk">몰라요</button><button class="btn no" data-m="no">헷갈려</button><button class="btn ok" data-m="ok">알아요</button><button class="btn" data-m="skip">다음</button></div>
     <div class="acts"><button class="link" data-goto="${q.p}" data-book="${q.book}">${q.book==='notes'?'복습노트':'숙제워크지'} ${q.p}쪽에서 보기</button>${marks[q.id]?`<button class="link" data-m="clear">표시 지우기</button>`:''}</div>`;
@@ -309,6 +330,7 @@ $('qwrap').onclick=e=>{
   if(okF(q)) qi++;
   renderQuiz();
 };
+swipe($('qwrap'),()=>{const P=pool();if(!P.length)return;qi=(qi+1)%P.length;renderQuiz();flash('다음 문제')},()=>{const P=pool();if(!P.length)return;qi=(qi-1+P.length)%P.length;renderQuiz();flash('이전 문제')});
 $('qchips').onclick=e=>{const b=e.target.closest('.chip');if(b){qd=b.dataset.d;store.set('qd-'+src,qd);qi=0;renderQuiz()}};
 $('flt').onchange=()=>{qi=0;store.set('flt',$('flt').value);renderQuiz()};
 try{$('flt').value=store.get('flt','all')}catch(e){}
