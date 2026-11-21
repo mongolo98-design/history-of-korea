@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>개항기 복습 강의 영상 (11/21)</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#0b1220;color:#fff;font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14px}
+h1{font-size:22px;margin:6px 0 4px;text-align:center}
+p{color:#aeb9dd;font-size:14px;margin-bottom:12px;text-align:center}
+video{width:100%;max-width:960px;aspect-ratio:16/9;background:#000;border-radius:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+a{display:inline-block;min-height:46px;line-height:46px;padding:0 18px;border-radius:12px;background:#26355c;color:#fff;text-decoration:none;font-weight:700}
+a.pk{background:#ef4d8a}
+.ch{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:960px}
+.ch button{min-height:42px;padding:0 12px;border:0;border-radius:10px;background:#1b2745;color:#dfe6ff;font:700 14px inherit;touch-action:manipulation}
+</style></head><body>
+<h1>개항기 복습 강의 · 11월 21일</h1>
+<p>흥선대원군 ~ 경술국치 (자막 영상, 약 11분)</p>
+<video id="v" controls playsinline preload="metadata" src="gaehang-lecture.mp4"></video>
+<div class="ch" id="ch"></div>
+<div class="row"><a class="pk" href="lecture.html">🔊 음성으로 듣는 강의</a><a href="./">← 공부 앱으로</a></div>
+<script>
+const T=[["시작",0],["연표",24],["대원군 개혁",113],["병제병·오신척",161],["강화도 조약",247],["임오군란",304],["갑신정변",345],["동학",410],["청동갑을·아독대",441],["러을정",504],["퀴즈",554]];
+const v=document.getElementById('v');
+document.getElementById('ch').innerHTML=T.map(([n,t])=>`<button data-t="${t}">${n}</button>`).join('');
+document.getElementById('ch').onclick=e=>{const t=e.target.dataset.t;if(t!=null){v.currentTime=+t;v.play()}};
+</script></body></html>
